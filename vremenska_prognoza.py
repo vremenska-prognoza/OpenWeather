@@ -110,11 +110,11 @@ if st.button("Prikaži podatke"):
         # Prikaz trenutnih podataka
         st.dataframe(df)
 
-        # Kombinovani grafikon sa stubcima i linijama
-        fig = go.Figure()
+        # **Trenutni grafikon - Kombinovani grafikon sa stubcima i linijama**
+        fig_current = go.Figure()
 
         # Temperatura - Linija
-        fig.add_trace(go.Scatter(
+        fig_current.add_trace(go.Scatter(
             x=df['Grad'],
             y=df['Temperatura (°C)'],
             mode='lines+markers',
@@ -127,7 +127,7 @@ if st.button("Prikaži podatke"):
 
         # Padavine - Stubci
         if 'Padavine (%)' in df.columns:
-            fig.add_trace(go.Bar(
+            fig_current.add_trace(go.Bar(
                 x=df['Grad'],
                 y=df['Padavine (%)'],
                 name="Padavine (%)",
@@ -137,7 +137,7 @@ if st.button("Prikaži podatke"):
             ))
 
         # Vetar - Linija
-        fig.add_trace(go.Scatter(
+        fig_current.add_trace(go.Scatter(
             x=df['Grad'],
             y=df['Vetar (m/s)'],
             mode='lines+markers',
@@ -149,7 +149,7 @@ if st.button("Prikaži podatke"):
         ))
 
         # Sunčevo zračenje - Stubci (ili možete koristiti kao liniju, zavisno od vaših potreba)
-        fig.add_trace(go.Bar(
+        fig_current.add_trace(go.Bar(
             x=df['Grad'],
             y=df['Sunčevo zračenje (W/m²)'],
             name="Sunčevo zračenje",
@@ -159,8 +159,8 @@ if st.button("Prikaži podatke"):
         ))
 
         # Raspored grafikona bez duple osovine
-        fig.update_layout(
-            title="🌡️ Prognoza (Temperatura, Padavine, Vetar, Sunčevo Zračenje)",
+        fig_current.update_layout(
+            title="🌡️ Trenutno stanje (Temperatura, Padavine, Vetar, Sunčevo Zračenje)",
             xaxis_title="Grad",
             yaxis_title="Vrednosti",
             plot_bgcolor='white',
@@ -169,7 +169,7 @@ if st.button("Prikaži podatke"):
             margin=dict(l=40, r=40, t=40, b=40)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig_current, use_container_width=True)
 
         # Prikazivanje prognoze za nekoliko dana
         forecast = get_forecast(city=gradovi_input, lat=lat, lon=lon)
@@ -180,11 +180,9 @@ if st.button("Prikaži podatke"):
             # Prikaz prognoze u tabeli
             st.dataframe(df_forecast)
 
-            # Kombinovani grafikon za prognozu
-            fig_forecast = go.Figure()
-
-            # Temperatura - Linija
-            fig_forecast.add_trace(go.Scatter(
+            # **1. Grafikon za temperaturu**
+            fig_temp = go.Figure()
+            fig_temp.add_trace(go.Scatter(
                 x=df_forecast['Sat'],
                 y=df_forecast['Temperatura (°C)'],
                 mode='lines+markers',
@@ -194,9 +192,19 @@ if st.button("Prikaži podatke"):
                 text=df_forecast['Temperatura (°C)'].apply(lambda x: f'{x}°C'),
                 hoverinfo='text'
             ))
+            fig_temp.update_layout(
+                title="🌡️ Temperatura za naredne dane",
+                xaxis_title="Vreme (Sat)",
+                yaxis_title="Temperatura (°C)",
+                plot_bgcolor='white',
+                template='plotly_dark',
+                margin=dict(l=40, r=40, t=40, b=40)
+            )
+            st.plotly_chart(fig_temp, use_container_width=True)
 
-            # Padavine - Stubci
-            fig_forecast.add_trace(go.Bar(
+            # **2. Grafikon za padavine**
+            fig_rain = go.Figure()
+            fig_rain.add_trace(go.Bar(
                 x=df_forecast['Sat'],
                 y=df_forecast['Padavine (%)'],
                 name="Padavine (%)",
@@ -204,9 +212,19 @@ if st.button("Prikaži podatke"):
                 text=df_forecast['Padavine (%)'].apply(lambda x: f'{x}%'),
                 hoverinfo='text'
             ))
+            fig_rain.update_layout(
+                title="💧 Padavine za naredne dane",
+                xaxis_title="Vreme (Sat)",
+                yaxis_title="Padavine (%)",
+                plot_bgcolor='white',
+                template='plotly_dark',
+                margin=dict(l=40, r=40, t=40, b=40)
+            )
+            st.plotly_chart(fig_rain, use_container_width=True)
 
-            # Vetar - Linija
-            fig_forecast.add_trace(go.Scatter(
+            # **3. Grafikon za vetar**
+            fig_wind = go.Figure()
+            fig_wind.add_trace(go.Scatter(
                 x=df_forecast['Sat'],
                 y=df_forecast['Vetar (m/s)'],
                 mode='lines+markers',
@@ -216,9 +234,19 @@ if st.button("Prikaži podatke"):
                 text=df_forecast['Vetar (m/s)'].apply(lambda x: f'{x} m/s'),
                 hoverinfo='text'
             ))
+            fig_wind.update_layout(
+                title="🌬️ Vetar za naredne dane",
+                xaxis_title="Vreme (Sat)",
+                yaxis_title="Vetar (m/s)",
+                plot_bgcolor='white',
+                template='plotly_dark',
+                margin=dict(l=40, r=40, t=40, b=40)
+            )
+            st.plotly_chart(fig_wind, use_container_width=True)
 
-            # Sunčevo zračenje - Stubci
-            fig_forecast.add_trace(go.Bar(
+            # **4. Grafikon za sunčevo zračenje**
+            fig_sun = go.Figure()
+            fig_sun.add_trace(go.Bar(
                 x=df_forecast['Sat'],
                 y=df_forecast['Sunčevo zračenje (W/m²)'],
                 name="Sunčevo zračenje",
@@ -226,16 +254,12 @@ if st.button("Prikaži podatke"):
                 text=df_forecast['Sunčevo zračenje (W/m²)'].apply(lambda x: f'{x} W/m²'),
                 hoverinfo='text'
             ))
-
-            # Raspored grafikona
-            fig_forecast.update_layout(
-                title="⏳ Prognoza za nekoliko dana (Temperatura, Padavine, Vetar, Sunčevo Zračenje)",
+            fig_sun.update_layout(
+                title="☀️ Sunčevo zračenje za naredne dane",
                 xaxis_title="Vreme (Sat)",
-                yaxis_title="Vrednosti",
+                yaxis_title="Sunčevo zračenje (W/m²)",
                 plot_bgcolor='white',
                 template='plotly_dark',
-                barmode='group',
                 margin=dict(l=40, r=40, t=40, b=40)
             )
-
-            st.plotly_chart(fig_forecast, use_container_width=True)
+            st.plotly_chart(fig_sun, use_container_width=True)
