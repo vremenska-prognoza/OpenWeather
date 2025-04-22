@@ -1,0 +1,16 @@
+# Ignoriši .env fajl
+.env
+
+# Python cache fajlovi
+__pycache__/
+*.py[cod]
+
+# VS Code podešavanja
+.vscode/
+
+# Streamlit automatski generisani fajlovi
+.streamlit/
+
+# OS fajlovi
+.DS_Store
+Thumbs.db
