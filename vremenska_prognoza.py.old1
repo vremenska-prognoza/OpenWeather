@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.express as px
 import os
 from dotenv import load_dotenv
-from datetime import datetime
 
 # Učitavanje .env fajla
 load_dotenv()
@@ -40,8 +39,8 @@ def get_weather(lat=None, lon=None, city=None, unit="metric"):
         st.error(f"❌ Greška prilikom povezivanja sa OpenWeather API: {str(e)}")
         return None
 
-# Funkcija za dobijanje prognoze za nekoliko dana
-def get_forecast(lat=None, lon=None, city=None, unit="metric", period="3"):
+# Funkcija za dobijanje satne prognoze
+def get_hourly_forecast(lat=None, lon=None, city=None, unit="metric"):
     if city:
         url = f'https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units={unit}'
     elif lat and lon:
@@ -51,12 +50,12 @@ def get_forecast(lat=None, lon=None, city=None, unit="metric", period="3"):
 
     try:
         response = requests.get(url)
-        response.raise_for_status()
+        response.raise_for_status()  # Proverava da li je status code uspešan (200)
         data = response.json()
 
-        forecast_data = []
+        hourly_data = []
         for entry in data['list']:
-            forecast_data.append({
+            hourly_data.append({
                 'Sat': entry['dt_txt'],
                 'Temperatura (°C)': entry['main']['temp'],
                 'Vlažnost (%)': entry['main']['humidity'],
@@ -64,8 +63,7 @@ def get_forecast(lat=None, lon=None, city=None, unit="metric", period="3"):
                 'Vetar (m/s)': entry['wind']['speed'],
                 'Opis': entry['weather'][0]['description'].capitalize()
             })
-
-        return forecast_data
+        return hourly_data
     except requests.exceptions.RequestException as e:
         st.error(f"❌ Greška prilikom povezivanja sa OpenWeather API: {str(e)}")
         return None
@@ -78,12 +76,6 @@ st.title("🌤️ Vremenska prognoza u realnom vremenu")
 gradovi_input = st.text_input("Unesi ime grada (npr. Beograd):", "Beograd")
 gradovi_input_koordinate = st.text_input("ILI Unesi geografske koordinate lat, lon (npr. 44.8176, 20.4633):", "")
 
-# Odabir vremenskog perioda
-period_option = st.radio(
-    "Odaberite vremenski period",
-    ('Danas', '3 dana', '5 dana', '7 dana', 'Od-do period')
-)
-
 # Ako korisnik unese koordinate
 koordinate = [g.strip() for g in gradovi_input_koordinate.split(',') if g.strip()]
 if len(koordinate) == 2:
@@ -91,53 +83,44 @@ if len(koordinate) == 2:
 else:
     lat, lon = None, None
 
-# Ako je odabrana opcija 'Od-do period'
-if period_option == 'Od-do period':
-    start_date = st.date_input("Početni datum", datetime.today())
-    end_date = st.date_input("Završni datum", datetime.today())
-    if end_date < start_date:
-        st.error("❌ Završni datum ne može biti pre početnog datuma!")
-        st.stop()
-
 # Dugme za prikaz
 if st.button("Prikaži podatke"):
     podaci = []
-
+    
     # Prikazivanje trenutnog vremena
-    if period_option == 'Danas':
-        if gradovi_input:
-            vreme = get_weather(city=gradovi_input)
-        elif lat and lon:
-            vreme = get_weather(lat=lat, lon=lon)
-        else:
-            st.error("❌ Unesite ili ime grada ili koordinate!")
-            st.stop()
+    if gradovi_input:
+        vreme = get_weather(city=gradovi_input)
+    elif lat and lon:
+        vreme = get_weather(lat=lat, lon=lon)
+    else:
+        st.error("❌ Unesite ili ime grada ili koordinate!")
+        st.stop()
 
-        if vreme:
-            podaci.append(vreme)
-        else:
-            st.warning(f"❌ Nema podataka za unesene vrednosti.")
-
-    # Prikazivanje prognoze za nekoliko dana
-    elif period_option in ['3 dana', '5 dana', '7 dana']:
-        forecast = get_forecast(city=gradovi_input, lat=lat, lon=lon)
+    if vreme:
+        podaci.append(vreme)
+    else:
+        st.warning(f"❌ Nema podataka za unesene vrednosti.")
+    
+    # Prikazivanje satne prognoze
+    if gradovi_input or (lat and lon):
+        hourly_forecast = get_hourly_forecast(city=gradovi_input, lat=lat, lon=lon)
         
-        if forecast:
-            df_forecast = pd.DataFrame(forecast)
-            st.dataframe(df_forecast)
+        if hourly_forecast:
+            df_hourly = pd.DataFrame(hourly_forecast)
+            st.dataframe(df_hourly)
 
-            # Bar grafikon za temperaturu
-            fig_temp = px.bar(df_forecast, x='Sat', y='Temperatura (°C)', title="🌡️ Prognoza temperature")
+            # Grafikon temperature tokom dana
+            fig_temp = px.line(df_hourly, x='Sat', y='Temperatura (°C)', title="🌡️ Satna temperatura")
             st.plotly_chart(fig_temp, use_container_width=True)
 
-            # Bar grafikon za vlažnost
-            fig_humidity = px.bar(df_forecast, x='Sat', y='Vlažnost (%)', title="💧 Prognoza vlažnosti")
+            # Grafikon vlažnosti tokom dana
+            fig_humidity = px.line(df_hourly, x='Sat', y='Vlažnost (%)', title="💧 Satna vlažnost")
             st.plotly_chart(fig_humidity, use_container_width=True)
 
-            # Bar grafikon za padavine
-            fig_rain = px.bar(df_forecast, x='Sat', y='Padavine (%)', title="🌧️ Prognoza padavina")
+            # Grafikon padavina tokom dana
+            fig_rain = px.line(df_hourly, x='Sat', y='Padavine (%)', title="🌧️ Satna padavina")
             st.plotly_chart(fig_rain, use_container_width=True)
-
-            # Bar grafikon za vetar
-            fig_wind = px.bar(df_forecast, x='Sat', y='Vetar (m/s)', title="💨 Prognoza vetra")
+            
+            # Grafikon vetra tokom dana
+            fig_wind = px.line(df_hourly, x='Sat', y='Vetar (m/s)', title="💨 Satna brzina vetra")
             st.plotly_chart(fig_wind, use_container_width=True)
