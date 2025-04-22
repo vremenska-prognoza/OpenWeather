@@ -126,14 +126,15 @@ if st.button("Prikaži podatke"):
         ))
 
         # Padavine - Stubci
-        fig.add_trace(go.Bar(
-            x=df['Grad'],
-            y=df['Padavine (%)'],
-            name="Padavine (%)",
-            marker=dict(color='deepskyblue'),
-            text=df['Padavine (%)'].apply(lambda x: f'{x}%'),
-            hoverinfo='text'
-        ))
+        if 'Padavine (%)' in df.columns:
+            fig.add_trace(go.Bar(
+                x=df['Grad'],
+                y=df['Padavine (%)'],
+                name="Padavine (%)",
+                marker=dict(color='deepskyblue'),
+                text=df['Padavine (%)'].apply(lambda x: f'{x}%'),
+                hoverinfo='text'
+            ))
 
         # Vetar - Linija
         fig.add_trace(go.Scatter(
