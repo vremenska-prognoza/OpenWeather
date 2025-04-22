@@ -41,7 +41,7 @@ def get_weather(lat=None, lon=None, city=None, unit="metric"):
         return None
 
 # Funkcija za dobijanje prognoze za nekoliko dana
-def get_forecast(lat=None, lon=None, city=None, unit="metric", period="3"):
+def get_forecast(lat=None, lon=None, city=None, unit="metric"):
     if city:
         url = f'https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units={unit}'
     elif lat and lon:
@@ -81,7 +81,7 @@ gradovi_input_koordinate = st.text_input("ILI Unesi geografske koordinate lat, l
 # Odabir vremenskog perioda
 period_option = st.radio(
     "Odaberite vremenski period",
-    ('Danas', '3 dana', '5 dana', '7 dana', 'Od-do period')
+    ('Danas', '3 dana', '5 dana', '7 dana')
 )
 
 # Ako korisnik unese koordinate
@@ -91,19 +91,11 @@ if len(koordinate) == 2:
 else:
     lat, lon = None, None
 
-# Ako je odabrana opcija 'Od-do period'
-if period_option == 'Od-do period':
-    start_date = st.date_input("Početni datum", datetime.today())
-    end_date = st.date_input("Završni datum", datetime.today())
-    if end_date < start_date:
-        st.error("❌ Završni datum ne može biti pre početnog datuma!")
-        st.stop()
-
 # Dugme za prikaz
 if st.button("Prikaži podatke"):
     podaci = []
 
-    # Prikazivanje trenutnog vremena
+    # Prikazivanje trenutnog vremena za "Danas"
     if period_option == 'Danas':
         if gradovi_input:
             vreme = get_weather(city=gradovi_input)
@@ -117,8 +109,8 @@ if st.button("Prikaži podatke"):
             podaci.append(vreme)
         else:
             st.warning(f"❌ Nema podataka za unesene vrednosti.")
-
-    # Prikazivanje prognoze za nekoliko dana
+    
+    # Prikazivanje prognoze za 3, 5 ili 7 dana
     elif period_option in ['3 dana', '5 dana', '7 dana']:
         forecast = get_forecast(city=gradovi_input, lat=lat, lon=lon)
         
@@ -141,3 +133,4 @@ if st.button("Prikaži podatke"):
             # Bar grafikon za vetar
             fig_wind = px.bar(df_forecast, x='Sat', y='Vetar (m/s)', title="💨 Prognoza vetra")
             st.plotly_chart(fig_wind, use_container_width=True)
+
