@@ -34,7 +34,8 @@ def get_weather(lat=None, lon=None, city=None, unit="metric"):
             'Vlažnost (%)': data['main']['humidity'],
             'Pritisak (hPa)': data['main']['pressure'],
             'Vetar (m/s)': data['wind']['speed'],
-            'Opis': data['weather'][0]['description'].capitalize()
+            'Opis': data['weather'][0]['description'].capitalize(),
+            'Sunčevo zračenje (W/m²)': data.get('clouds', {}).get('all', 0),  # Procenat oblaka kao proxy za sunčevo zračenje
         }
     except requests.exceptions.RequestException as e:
         st.error(f"❌ Greška prilikom povezivanja sa OpenWeather API: {str(e)}")
@@ -62,7 +63,8 @@ def get_forecast(lat=None, lon=None, city=None, unit="metric"):
                 'Vlažnost (%)': entry['main']['humidity'],
                 'Padavine (%)': entry.get('rain', {}).get('3h', 0),  # Padavine u poslednja 3h
                 'Vetar (m/s)': entry['wind']['speed'],
-                'Opis': entry['weather'][0]['description'].capitalize()
+                'Opis': entry['weather'][0]['description'].capitalize(),
+                'Sunčevo zračenje (W/m²)': entry.get('clouds', {}).get('all', 0),  # Procenat oblaka kao proxy za sunčevo zračenje
             })
 
         return forecast_data
@@ -108,53 +110,73 @@ if st.button("Prikaži podatke"):
         # Prikaz trenutnih podataka
         st.dataframe(df)
 
-        # Poboljšani grafikon za temperaturu
-        fig_temp = go.Figure()
+        # Kombinovani grafikon sa dualnim osama
+        fig = go.Figure()
 
-        fig_temp.add_trace(go.Bar(
+        # Temperatura - Linija
+        fig.add_trace(go.Scatter(
             x=df['Grad'],
             y=df['Temperatura (°C)'],
+            mode='lines+markers',
             name="Temperatura",
-            marker=dict(color='orangered'),
+            line=dict(color='orangered', width=4),
+            marker=dict(size=8, color='orangered'),
             text=df['Temperatura (°C)'].apply(lambda x: f'{x}°C'),
             hoverinfo='text'
         ))
 
-        fig_temp.update_layout(
-            title="🌡️ Trenutna temperatura",
-            xaxis_title="Grad",
-            yaxis_title="Temperatura (°C)",
-            plot_bgcolor='white',
-            template='plotly_dark',
-            barmode='group',
-            margin=dict(l=40, r=40, t=40, b=40)
-        )
-
-        st.plotly_chart(fig_temp, use_container_width=True)
-
-        # Poboljšani grafikon za vlažnost
-        fig_humidity = go.Figure()
-
-        fig_humidity.add_trace(go.Bar(
+        # Padavine - Stubci
+        fig.add_trace(go.Bar(
             x=df['Grad'],
-            y=df['Vlažnost (%)'],
-            name="Vlažnost",
-            marker=dict(color='lightblue'),
-            text=df['Vlažnost (%)'].apply(lambda x: f'{x}%'),
+            y=df['Padavine (%)'],
+            name="Padavine (%)",
+            marker=dict(color='deepskyblue'),
+            text=df['Padavine (%)'].apply(lambda x: f'{x}%'),
             hoverinfo='text'
         ))
 
-        fig_humidity.update_layout(
-            title="💧 Trenutna vlažnost",
+        # Vetar - Linija
+        fig.add_trace(go.Scatter(
+            x=df['Grad'],
+            y=df['Vetar (m/s)'],
+            mode='lines+markers',
+            name="Vetar",
+            line=dict(color='green', width=4),
+            marker=dict(size=8, color='green'),
+            text=df['Vetar (m/s)'].apply(lambda x: f'{x} m/s'),
+            hoverinfo='text'
+        ))
+
+        # Sunčevo zračenje - Stubci (ili možete koristiti kao liniju, zavisno od vaših potreba)
+        fig.add_trace(go.Bar(
+            x=df['Grad'],
+            y=df['Sunčevo zračenje (W/m²)'],
+            name="Sunčevo zračenje",
+            marker=dict(color='gold'),
+            text=df['Sunčevo zračenje (W/m²)'].apply(lambda x: f'{x} W/m²'),
+            hoverinfo='text'
+        ))
+
+        # Dualna osovina
+        fig.update_layout(
+            title="🌡️ Prognoza (Temperatura, Padavine, Vetar, Sunčevo Zračenje)",
             xaxis_title="Grad",
-            yaxis_title="Vlažnost (%)",
+            yaxis_title="Temperatura i Vetar",
+            yaxis2_title="Padavine i Sunčevo Zračenje",
             plot_bgcolor='white',
             template='plotly_dark',
             barmode='group',
             margin=dict(l=40, r=40, t=40, b=40)
         )
 
-        st.plotly_chart(fig_humidity, use_container_width=True)
+        fig.update_layout(
+            yaxis2=dict(
+                overlaying='y',
+                side='right'
+            )
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
         # Prikazivanje prognoze za nekoliko dana
         forecast = get_forecast(city=gradovi_input, lat=lat, lon=lon)
@@ -164,53 +186,3 @@ if st.button("Prikaži podatke"):
 
             # Prikaz prognoze u tabeli
             st.dataframe(df_forecast)
-
-            # Grafikon za temperaturu tokom dana
-            fig_forecast_temp = go.Figure()
-
-            fig_forecast_temp.add_trace(go.Scatter(
-                x=df_forecast['Sat'],
-                y=df_forecast['Temperatura (°C)'],
-                mode='lines+markers',
-                name="Temperatura",
-                line=dict(color='orangered', width=4),
-                marker=dict(size=8, color='orangered'),
-                text=df_forecast['Temperatura (°C)'].apply(lambda x: f'{x}°C'),
-                hoverinfo='text'
-            ))
-
-            fig_forecast_temp.update_layout(
-                title="🌡️ Prognoza temperature tokom dana",
-                xaxis_title="Vreme",
-                yaxis_title="Temperatura (°C)",
-                plot_bgcolor='white',
-                template='plotly_dark',
-                margin=dict(l=40, r=40, t=40, b=40)
-            )
-
-            st.plotly_chart(fig_forecast_temp, use_container_width=True)
-
-            # Grafikon za padavine
-            fig_forecast_rain = go.Figure()
-
-            fig_forecast_rain.add_trace(go.Scatter(
-                x=df_forecast['Sat'],
-                y=df_forecast['Padavine (%)'],
-                mode='lines+markers',
-                name="Padavine",
-                line=dict(color='deepskyblue', width=4),
-                marker=dict(size=8, color='deepskyblue'),
-                text=df_forecast['Padavine (%)'].apply(lambda x: f'{x}%'),
-                hoverinfo='text'
-            ))
-
-            fig_forecast_rain.update_layout(
-                title="🌧️ Prognoza padavina",
-                xaxis_title="Vreme",
-                yaxis_title="Padavine (%)",
-                plot_bgcolor='white',
-                template='plotly_dark',
-                margin=dict(l=40, r=40, t=40, b=40)
-            )
-
-            st.plotly_chart(fig_forecast_rain, use_container_width=True)
