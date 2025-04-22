@@ -5,6 +5,9 @@ import plotly.express as px
 import os
 from dotenv import load_dotenv
 
+# Streamlit UI - set page config mora biti prvi
+st.set_page_config(page_title="Vremenska aplikacija", layout="wide")
+
 # Učitavanje .env fajla
 load_dotenv()  # Ovdje učitavamo .env fajl
 
@@ -35,7 +38,6 @@ def get_weather(city):
         return None
 
 # Streamlit UI
-st.set_page_config(page_title="Vremenska aplikacija", layout="wide")
 st.title("🌤️ Vremenska prognoza u realnom vremenu")
 
 # Unos gradova
@@ -69,4 +71,3 @@ if st.button("Prikaži podatke"):
         # Grafikon vlažnosti
         fig_humidity = px.bar(df, x="Grad", y="Vlažnost (%)", color="Vlažnost (%)", title="💧 Vlažnost po gradovima")
         st.plotly_chart(fig_humidity, use_container_width=True)
-
