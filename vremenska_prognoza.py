@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 # Učitavanje .env fajla
 load_dotenv()
+
+# Uzimanje API ključa iz .env fajla
 API_KEY = os.getenv("API_KEY")
 
 # Funkcija za dobijanje podataka o vremenu
