@@ -158,30 +158,9 @@ if st.button("Prikaži podatke"):
             hoverinfo='text'
         ))
 
-        # Vremenski opis - Kategorijalni podaci (dodavanje ikona ili boja za opis)
-        fig_current.add_trace(go.Scatter(
-            x=df['Grad'],
-            y=[0] * len(df),  # Pomeranje linije na 0 visinu za opis
-            mode='markers+text',
-            name="Vremenski opis",
-            marker=dict(
-                size=14,
-                color=['lightblue' if 'Clear' in opis else
-                       'lightyellow' if 'Sunny' in opis else
-                       'lightgray' if 'Cloud' in opis else
-                       'lightgreen' for opis in df['Opis']],  # Dodavanje boja
-                symbol=['circle' if 'Clear' in opis else
-                        'square' if 'Cloud' in opis else
-                        'diamond' for opis in df['Opis']]  # Ikone za različite vrste vremena
-            ),
-            text=df['Opis'],
-            textposition="top center",
-            hoverinfo='text'
-        ))
-
         # Raspored grafikona bez duple osovine
         fig_current.update_layout(
-            title="🌡️ Trenutno stanje (Temperatura, Padavine, Vetar, Sunčevo Zračenje, Opis)",
+            title="🌡️ Trenutno stanje (Temperatura, Padavine, Vetar, Sunčevo Zračenje)",
             xaxis_title="Grad",
             yaxis_title="Vrednosti",
             plot_bgcolor='white',
