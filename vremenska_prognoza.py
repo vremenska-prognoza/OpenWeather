@@ -110,7 +110,7 @@ if st.button("Prikaži podatke"):
         # Prikaz trenutnih podataka
         st.dataframe(df)
 
-        # Kombinovani grafikon sa dualnim osama
+        # Kombinovani grafikon sa stubcima i linijama
         fig = go.Figure()
 
         # Temperatura - Linija
@@ -158,23 +158,15 @@ if st.button("Prikaži podatke"):
             hoverinfo='text'
         ))
 
-        # Dualna osovina
+        # Raspored grafikona bez duple osovine
         fig.update_layout(
             title="🌡️ Prognoza (Temperatura, Padavine, Vetar, Sunčevo Zračenje)",
             xaxis_title="Grad",
-            yaxis_title="Temperatura i Vetar",
-            yaxis2_title="Padavine i Sunčevo Zračenje",
+            yaxis_title="Vrednosti",
             plot_bgcolor='white',
             template='plotly_dark',
             barmode='group',
             margin=dict(l=40, r=40, t=40, b=40)
-        )
-
-        fig.update_layout(
-            yaxis2=dict(
-                overlaying='y',
-                side='right'
-            )
         )
 
         st.plotly_chart(fig, use_container_width=True)
