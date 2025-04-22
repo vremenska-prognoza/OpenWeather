@@ -179,3 +179,63 @@ if st.button("Prikaži podatke"):
 
             # Prikaz prognoze u tabeli
             st.dataframe(df_forecast)
+
+            # Kombinovani grafikon za prognozu
+            fig_forecast = go.Figure()
+
+            # Temperatura - Linija
+            fig_forecast.add_trace(go.Scatter(
+                x=df_forecast['Sat'],
+                y=df_forecast['Temperatura (°C)'],
+                mode='lines+markers',
+                name="Temperatura",
+                line=dict(color='orangered', width=2),
+                marker=dict(size=6, color='orangered'),
+                text=df_forecast['Temperatura (°C)'].apply(lambda x: f'{x}°C'),
+                hoverinfo='text'
+            ))
+
+            # Padavine - Stubci
+            fig_forecast.add_trace(go.Bar(
+                x=df_forecast['Sat'],
+                y=df_forecast['Padavine (%)'],
+                name="Padavine (%)",
+                marker=dict(color='deepskyblue'),
+                text=df_forecast['Padavine (%)'].apply(lambda x: f'{x}%'),
+                hoverinfo='text'
+            ))
+
+            # Vetar - Linija
+            fig_forecast.add_trace(go.Scatter(
+                x=df_forecast['Sat'],
+                y=df_forecast['Vetar (m/s)'],
+                mode='lines+markers',
+                name="Vetar",
+                line=dict(color='green', width=2),
+                marker=dict(size=6, color='green'),
+                text=df_forecast['Vetar (m/s)'].apply(lambda x: f'{x} m/s'),
+                hoverinfo='text'
+            ))
+
+            # Sunčevo zračenje - Stubci
+            fig_forecast.add_trace(go.Bar(
+                x=df_forecast['Sat'],
+                y=df_forecast['Sunčevo zračenje (W/m²)'],
+                name="Sunčevo zračenje",
+                marker=dict(color='gold'),
+                text=df_forecast['Sunčevo zračenje (W/m²)'].apply(lambda x: f'{x} W/m²'),
+                hoverinfo='text'
+            ))
+
+            # Raspored grafikona
+            fig_forecast.update_layout(
+                title="⏳ Prognoza za nekoliko dana (Temperatura, Padavine, Vetar, Sunčevo Zračenje)",
+                xaxis_title="Vreme (Sat)",
+                yaxis_title="Vrednosti",
+                plot_bgcolor='white',
+                template='plotly_dark',
+                barmode='group',
+                margin=dict(l=40, r=40, t=40, b=40)
+            )
+
+            st.plotly_chart(fig_forecast, use_container_width=True)
