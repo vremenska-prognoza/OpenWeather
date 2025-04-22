@@ -5,24 +5,13 @@ import plotly.express as px
 import os
 from dotenv import load_dotenv
 
-# Streamlit UI - set page config mora biti prvi
-st.set_page_config(page_title="Vremenska aplikacija", layout="wide")
-
 # Učitavanje .env fajla
-load_dotenv()  # Ovdje učitavamo .env fajl
-
-# Sada pokušavamo da dohvatimo API_KEY iz .env fajla
+load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
-# Provera da li je API_KEY učitan iz .env fajla
-if API_KEY is None:
-    st.error("API ključ nije definisan u .env fajlu!")
-else:
-    st.write(f"API_KEY je učitan: {API_KEY[:5]}...")  # Pokazivanje delimičnog API ključa
-
-# Funkcija za dobijanje podataka o vremenu
-def get_weather(city):
-    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric'
+# Funkcija za dobijanje podataka o vremenu koristeći lat i lon
+def get_weather(lat, lon):
+    url = f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric'
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
@@ -38,30 +27,28 @@ def get_weather(city):
         return None
 
 # Streamlit UI
+st.set_page_config(page_title="Vremenska aplikacija", layout="wide")
 st.title("🌤️ Vremenska prognoza u realnom vremenu")
 
-# Unos gradova
-gradovi_input = st.text_input("Unesi gradove razdvojene zarezom (npr. Belgrade, Paris, New York):", "Belgrade, Paris, New York")
-gradovi = [g.strip() for g in gradovi_input.split(',') if g.strip()]
+# Unesi geografske koordinate lat, lon
+gradovi_input = st.text_input("Unesi geografske koordinate (lat, lon) razdvojene zarezom (npr. 44.8176, 20.4633 za Beograd):", "44.8176, 20.4633")
+koordinate = [g.strip() for g in gradovi_input.split(',') if g.strip()]
 
 # Dugme za prikaz
 if st.button("Prikaži podatke"):
     podaci = []
-    for grad in gradovi:
-        vreme = get_weather(grad)
+    if len(koordinate) == 2:
+        lat, lon = float(koordinate[0]), float(koordinate[1])
+        vreme = get_weather(lat, lon)
         if vreme:
             podaci.append(vreme)
         else:
-            st.warning(f"❌ Nema podataka za: {grad}")
+            st.warning(f"❌ Nema podataka za koordinate: {lat}, {lon}")
 
     if podaci:
         df = pd.DataFrame(podaci)
 
-        # Pretraga
-        search = st.text_input("🔍 Pretraga po gradu:")
-        if search:
-            df = df[df["Grad"].str.contains(search, case=False)]
-
+        # Prikaz podataka
         st.dataframe(df)
 
         # Grafikon temperature
