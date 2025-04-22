@@ -6,10 +6,16 @@ import os
 from dotenv import load_dotenv
 
 # Učitavanje .env fajla
-load_dotenv()
+load_dotenv()  # Ovdje učitavamo .env fajl
 
-# Uzimanje API ključa iz .env fajla
+# Sada pokušavamo da dohvatimo API_KEY iz .env fajla
 API_KEY = os.getenv("API_KEY")
+
+# Provera da li je API_KEY učitan iz .env fajla
+if API_KEY is None:
+    st.error("API ključ nije definisan u .env fajlu!")
+else:
+    st.write(f"API_KEY je učitan: {API_KEY[:5]}...")  # Pokazivanje delimičnog API ključa
 
 # Funkcija za dobijanje podataka o vremenu
 def get_weather(city):
@@ -32,6 +38,7 @@ def get_weather(city):
 st.set_page_config(page_title="Vremenska aplikacija", layout="wide")
 st.title("🌤️ Vremenska prognoza u realnom vremenu")
 
+# Unos gradova
 gradovi_input = st.text_input("Unesi gradove razdvojene zarezom (npr. Belgrade, Paris, New York):", "Belgrade, Paris, New York")
 gradovi = [g.strip() for g in gradovi_input.split(',') if g.strip()]
 
@@ -62,3 +69,4 @@ if st.button("Prikaži podatke"):
         # Grafikon vlažnosti
         fig_humidity = px.bar(df, x="Grad", y="Vlažnost (%)", color="Vlažnost (%)", title="💧 Vlažnost po gradovima")
         st.plotly_chart(fig_humidity, use_container_width=True)
+
